@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "FaultReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FaultReport",
+      "type": "object",
+      "description": "Represents a fault report submitted by a radiographer.",
+      "properties": {
+        "id": { "type": "string" },
+        "radiographerName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "systemNumber": { "type": "string" },
+        "facility": { "type": "string" },
+        "locationType": { "type": "string", "enum": ["Facility", "Community"] },
+        "faultCategory": { "type": "string", "enum": ["Minxray", "Qure.ai", "Others"] },
+        "faultSubCategory": { "type": "string" },
+        "customFaultDescription": { "type": "string" },
+        "detectionDate": { "type": "string", "format": "date-time" },
+        "dateIssueReported": { "type": "string", "format": "date-time" },
+        "dateResolved": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Resolved"] },
+        "currentAction": { "type": "string" },
+        "deleted": { "type": "boolean" },
+        "faultDescription": { "type": "string" }
+      },
+      "required": ["id", "radiographerName", "systemNumber", "facility", "locationType", "faultCategory", "detectionDate", "dateIssueReported", "status"]
+    },
+    "GeneralReport": {
+      "title": "GeneralReport",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "designation": { "type": "string" },
+        "detail": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "date"]
+    },
+    "SystemReport": {
+        "title": "SystemReport",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "productSystemId": { "type": "string" },
+          "operatorUserName": { "type": "string" },
+          "operatorEmail": { "type": "string" },
+          "phoneNumber": { "type": "string" },
+          "customerName": { "type": "string" },
+          "lga": { "type": "string" },
+          "state": { "type": "string" },
+          "zone": { "type": "string" },
+          "systemStatus": { "type": "string", "enum": ["Up", "Down", "Up with Fault"] },
+          "deleted": { "type": "boolean" }
+        },
+        "required": ["id", "productSystemId", "customerName"]
+    },
+    "ClinicalReport": {
+      "title": "ClinicalReport",
+      "type": "object",
+      "description": "TB screening clinical report with frequency periods.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "reportPeriod": { "type": "string", "enum": ["Daily", "Weekly", "Monthly", "Quarterly"] },
+        "state": { "type": "string" },
+        "machineId": { "type": "string" },
+        "radiographerName": { "type": "string" },
+        "attendeesCount": { "type": "integer" },
+        "cxrScreenedCount": { "type": "integer" },
+        "presumptiveCount": { "type": "integer" },
+        "presumptiveNoSputumCount": { "type": "integer" },
+        "samplesNotTestedCount": { "type": "integer" },
+        "prevDaySamplesTestedCount": { "type": "integer" },
+        "tbPatientsCount": { "type": "integer" },
+        "dsTbCount": { "type": "integer" },
+        "clinicalTbCount": { "type": "integer" },
+        "drTbCount": { "type": "integer" },
+        "rifIndeterminateCount": { "type": "integer" },
+        "submittedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "reportPeriod", "state", "machineId", "radiographerName"]
+    },
+    "ImpactMonthlyReport": {
+      "title": "ImpactMonthlyReport",
+      "type": "object",
+      "description": "Specialized monthly IMPACT PDX facility report.",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "state": { "type": "string" },
+        "machineId": { "type": "string" },
+        "radiographerName": { "type": "string" },
+        "facilityName": { "type": "string" },
+        "attendeesCount": { "type": "integer" },
+        "screenedForTbCount": { "type": "integer" },
+        "presumptiveRegisteredCount": { "type": "integer" },
+        "presumptiveEvaluatedCount": { "type": "integer" },
+        "totalTbDiagnosedCount": { "type": "integer" },
+        "bacteriologicalTbCount": { "type": "integer" },
+        "clinicalTbCount": { "type": "integer" },
+        "childhoodTbCount": { "type": "integer" },
+        "drTbCount": { "type": "integer" },
+        "startedTreatmentCount": { "type": "integer" },
+        "remarks": { "type": "string" },
+        "nonChestXrayCount": { "type": "integer" },
+        "submittedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "date", "machineId", "radiographerName", "facilityName", "totalTbDiagnosedCount"]
+    }
+  },
+  "auth": { "providers": [] },
+  "firestore": {
+      "faultReports": { "schema": { "$ref": "#/entities/FaultReport" }, "description": "Stores fault reports." },
+      "generalReports": { "schema": { "$ref": "#/entities/GeneralReport" }, "description": "Stores general reports." },
+      "systemReports": { "schema": { "$ref": "#/entities/SystemReport" }, "description": "Stores system reports." },
+      "clinicalReports": { "schema": { "$ref": "#/entities/ClinicalReport" }, "description": "Stores clinical TB reports." },
+      "impactMonthlyReports": { "schema": { "$ref": "#/entities/ImpactMonthlyReport" }, "description": "Stores monthly facility reports." },
+      "faults": { "schema": { "$ref": "#/entities/FaultOption" } },
+      "actionOptions": { "schema": { "$ref": "#/entities/ActionOption" } }
+  }
+}

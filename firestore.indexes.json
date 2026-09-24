@@ -1,0 +1,14 @@
+
+{
+  "indexes": [
+    {
+      "collectionGroup": "faultReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "deleted", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "systemNumber", "order": "ASCENDING" }
+      ]
+    }
+  ]
+}

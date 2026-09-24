@@ -1,0 +1,8 @@
+
+[
+    { "label": "Awaiting Spares", "value": "awaiting-spares" },
+    { "label": "Engineer Dispatched", "value": "engineer-dispatched" },
+    { "label": "Remote Troubleshooting", "value": "remote-troubleshooting" },
+    { "label": "Awaiting Customer Feedback", "value": "awaiting-customer-feedback" },
+    { "label": "On-site Assessment", "value": "on-site-assessment" }
+]

@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 195 67% 94%; /* #E5F5F9 */
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 197 71% 53%; /* #29ABE2 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 196 50% 88%;
+    --secondary-foreground: 224 71% 4%;
+    --muted: 196 50% 88%;
+    --muted-foreground: 224 71% 25%;
+    --accent: 120 25% 65%; /* #8FBC8F */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 197 30% 80%;
+    --input: 0 0% 100%;
+    --ring: 197 71% 53%;
+    --radius: 0.5rem;
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 195 20% 94%;
+    --sidebar-primary: 197 71% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 197 71% 53%;
+  }
+
+  .dark {
+    --background: 220 18% 12%;
+    --foreground: 195 20% 94%;
+    --card: 220 18% 10%;
+    --card-foreground: 195 20% 94%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 195 20% 94%;
+    --primary: 197 71% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 15% 20%;
+    --secondary-foreground: 195 20% 94%;
+    --muted: 220 15% 20%;
+    --muted-foreground: 195 20% 60%;
+    --accent: 120 25% 65%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 25%;
+    --input: 220 15% 25%;
+    --ring: 197 71% 53%;
+    
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 195 20% 94%;
+    --sidebar-primary: 197 71% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 197 71% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

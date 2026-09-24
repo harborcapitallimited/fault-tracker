@@ -1,0 +1,13 @@
+
+[
+    { "category": "Minxray", "label": "X-Ray Tube/Head Issue", "value": "xray-tube-head-issue" },
+    { "category": "Minxray", "label": "Generator/Power Problem", "value": "generator-power-problem" },
+    { "category": "Minxray", "label": "Detector/Panel Failure", "value": "detector-panel-failure" },
+    { "category": "Minxray", "label": "Software/Computer Error", "value": "software-computer-error" },
+    { "category": "Minxray", "label": "Mechanical/Stand Issue", "value": "mechanical-stand-issue" },
+    { "category": "Qure.ai", "label": "CAD Not Analyzing", "value": "cad-not-analyzing" },
+    { "category": "Qure.ai", "label": "Incorrect/Invalid Result", "value": "incorrect-invalid-result" },
+    { "category": "Qure.ai", "label": "Integration/Connectivity Problem", "value": "integration-connectivity-problem" },
+    { "category": "Qure.ai", "label": "Slow Performance", "value": "slow-performance" },
+    { "category": "Qure.ai", "label": "UI/Display Glitch", "value": "ui-display-glitch" }
+]

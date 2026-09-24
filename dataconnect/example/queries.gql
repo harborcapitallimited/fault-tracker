@@ -1,0 +1,37 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {
+    id_expr: "uuidV4()",
+    email: "newuser@example.com",
+    name: "New User"
+  })
+}
+
+query ListProducts @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  products {
+    id
+    name
+    description
+    price
+  }
+}
+
+mutation UpdateProduct($id: UUID!, $price: Float!) @auth(level: USER) {
+  product_update(
+    id: $id,
+    data: {
+      price: $price
+    }
+  )
+}
+
+query GetReviewsForProduct($productId: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  reviews(where: {productId: {eq: $productId}}) {
+    id
+    comment
+    rating
+    reviewer {
+      id
+      name
+    }
+  }
+}
