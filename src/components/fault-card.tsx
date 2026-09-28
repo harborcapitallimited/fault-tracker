@@ -14,6 +14,7 @@ import {
   Clock,
   Ticket,
   Mail,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn, normalizeSystemNumber, parseDate } from '@/lib/utils';
@@ -276,9 +277,18 @@ export function FaultCard({ report, isSelected, onToggleSelection, isHighlighted
                 <CardFooter className="flex justify-between items-center gap-2 p-4 bg-muted/10">
                   <div>
                     <SendEmailDialog report={report}>
-                      <Button variant="outline" size="sm" className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
-                        <Mail className="h-4 w-4" />
-                        Send Email
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={cn(
+                          "gap-1.5",
+                          report.emailSent 
+                            ? "border-green-500/40 text-green-500 hover:bg-green-500/10 hover:text-green-400" 
+                            : "border-primary/30 text-primary hover:bg-primary/10"
+                        )}
+                      >
+                        {report.emailSent ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Mail className="h-4 w-4" />}
+                        {report.emailSent ? 'Email Sent' : 'Send Email'}
                       </Button>
                     </SendEmailDialog>
                   </div>

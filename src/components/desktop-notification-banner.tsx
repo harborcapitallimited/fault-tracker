@@ -6,12 +6,10 @@ import { useDesktopNotifications } from '@/hooks/use-desktop-notifications';
 import { useAdmin } from '@/context/admin-context';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, BellRing, CheckCircle2, AlertCircle, X, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { BellRing, CheckCircle2, AlertCircle, Sparkles, Volume2 } from 'lucide-react';
 
 export function DesktopNotificationBanner() {
-  const { isAdmin } = useAdmin();
-  const { permission, requestPermission, triggerNotification, isSupported, isGranted } =
+  const { permission, requestPermission, triggerTestAlert, isSupported, isGranted } =
     useDesktopNotifications();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
@@ -28,31 +26,23 @@ export function DesktopNotificationBanner() {
     }
   };
 
-  const handleTestAlert = () => {
-    triggerNotification({
-      title: '🚨 Test Notification - Machine #MNX 003',
-      body: 'Ticket: FLT-TEST-889\nRadiographer: Test Operator\nIssue: Collimator Lamp Replacement Needed\nStatus: Pending Assessment',
-      ticketId: 'FLT-TEST-889',
-    });
-  };
-
-  // State 1: Granted - Show small active control with test button
+  // State 1: Granted - Show active control with test button
   if (isGranted) {
     return (
-      <div className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs">
+      <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs shadow-sm">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
           <span className="font-medium">
-            <strong>Desktop Alerts Active</strong> — You'll receive instant PC pop-ups when reports come in.
+            <strong>Desktop Alerts & Sound Active</strong> — You will receive instant PC pop-ups and chimes when reports come in.
           </span>
         </div>
         <Button
           variant="outline"
           size="sm"
-          onClick={handleTestAlert}
-          className="h-6 px-2 text-[10px] uppercase font-bold border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          onClick={triggerTestAlert}
+          className="h-7 px-2.5 text-[11px] font-semibold border-emerald-500/30 hover:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 gap-1.5"
         >
-          <BellRing className="h-3 w-3 mr-1" />
+          <Volume2 className="h-3.5 w-3.5" />
           Test Alert
         </Button>
       </div>
@@ -66,7 +56,7 @@ export function DesktopNotificationBanner() {
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0 text-amber-500" />
           <span>
-            Desktop notifications are currently <strong>blocked in your browser settings</strong>. Click the site settings icon in your URL bar to allow alerts.
+            Desktop notifications are currently <strong>blocked in your browser settings</strong>. Click the site settings lock/tune icon in your URL address bar and choose <strong>Allow</strong> for Notifications.
           </span>
         </div>
       </div>
@@ -86,7 +76,7 @@ export function DesktopNotificationBanner() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold tracking-tight text-foreground">
-                Enable Desktop Notifications
+                Enable Instant Desktop Alerts
               </h4>
               <Badge variant="secondary" className="text-[10px] font-bold">
                 WhatsApp Web Style

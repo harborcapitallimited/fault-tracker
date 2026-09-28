@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFaultReportMutations } from '@/lib/data';
 import { useRTDBList } from '@/firebase';
 import { normalizeSystemNumber } from '@/lib/utils';
-import { getEmailTemplate, type EmailTemplateType } from '@/lib/email-templates';
+import { getEmailTemplate, DEFAULT_SENDER_EMAIL, DEFAULT_SENDER_NAME, type EmailTemplateType } from '@/lib/email-templates';
 import { 
   Mail, 
   Copy, 
@@ -31,7 +31,9 @@ import {
   Send, 
   Loader2, 
   Ticket,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -47,6 +49,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedTicket, setCopiedTicket] = useState(false);
   const [copiedBody, setCopiedBody] = useState(false);
 
@@ -57,7 +60,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
   const ticketId = report.ticketId || report.id || 'N/A';
 
   // Find recipient email from report or matched system report
-  const matchedSystem = React.useMemo(() => {
+  const matchedSystem = useMemo(() => {
     if (!systems || !report.systemNumber) return null;
     const norm = normalizeSystemNumber(report.systemNumber);
     return systems.find(s => normalizeSystemNumber(s.productSystemId) === norm);
@@ -68,8 +71,9 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
   const [body, setBody] = useState('');
 
   // Sync state when dialog opens or report/template changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
+      setErrorMessage(null);
       const initialEmail = report.radiographerEmail || matchedSystem?.operatorEmail || '';
       setRecipientEmail(initialEmail);
       const initialType: EmailTemplateType = report.status === 'Resolved' ? 'resolved' : 'acknowledged';
@@ -125,7 +129,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
   const handleSendEmail = async () => {
     if (!recipientEmail || !recipientEmail.includes('@')) {
       toast({
-        title: 'Invalid Email',
+        title: 'Invalid Recipient Email',
         description: 'Please provide a valid recipient email address.',
         variant: 'destructive',
       });
@@ -133,6 +137,8 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
     }
 
     setIsSending(true);
+    setErrorMessage(null);
+
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
@@ -152,7 +158,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
         throw new Error(result.error || 'Failed to dispatch email.');
       }
 
-      // Record email sent status on report
+      // Record email sent status on report in RTDB
       await updateFaultReport(report.id, {
         radiographerEmail: recipientEmail,
         emailSent: true,
@@ -161,13 +167,15 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
 
       toast({
         title: 'Email Sent Successfully',
-        description: `Notification for Ticket ${ticketId} sent to ${recipientEmail}.`,
+        description: `Notification for Ticket ${ticketId} sent from ${DEFAULT_SENDER_EMAIL} to ${recipientEmail}.`,
       });
       setIsOpen(false);
     } catch (err: any) {
+      const errText = err.message || 'An unexpected error occurred.';
+      setErrorMessage(errText);
       toast({
-        title: 'Failed to Send Email',
-        description: err.message || 'An unexpected error occurred.',
+        title: 'Failed to Send Email Directly',
+        description: errText,
         variant: 'destructive',
       });
     } finally {
@@ -191,11 +199,26 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
             </Badge>
           </div>
           <DialogDescription className="text-xs">
-            Send an automated response to the radiographer for this fault ticket.
+            Send an official email notification to the radiographer for this fault ticket.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Sender Information Banner */}
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+              <div className="space-y-0.5">
+                <span className="text-muted-foreground">Sending from: </span>
+                <strong className="text-foreground font-semibold">{DEFAULT_SENDER_EMAIL}</strong>
+                <span className="text-muted-foreground ml-1">({DEFAULT_SENDER_NAME})</span>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-[10px] font-mono">
+              Verified Sender
+            </Badge>
+          </div>
+
           {/* Previous Sent Status Notice */}
           {report.emailSent && report.lastEmailSentAt && (
             <div className="flex items-center gap-2 p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 text-xs">
@@ -206,6 +229,31 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
                   {format(new Date(report.lastEmailSentAt), 'PPp')}
                 </strong>
               </span>
+            </div>
+          )}
+
+          {/* Error Notice with Quick Action */}
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="flex-1 font-medium leading-relaxed">
+                  {errorMessage}
+                </div>
+              </div>
+              <div className="pt-1 flex items-center justify-between border-t border-destructive/20">
+                <span className="text-[11px] opacity-90">You can still send directly via your local mail client:</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleOpenMailto}
+                  className="h-7 text-xs gap-1 border-destructive/30 hover:bg-destructive/10"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Open in Mail App
+                </Button>
+              </div>
             </div>
           )}
 
@@ -220,7 +268,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
                 variant={templateType === 'acknowledged' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleTemplateChange('acknowledged')}
-                className="text-xs justify-center"
+                className="text-xs justify-center font-medium"
               >
                 1. Complaint Logged
               </Button>
@@ -229,7 +277,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
                 variant={templateType === 'resolved' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleTemplateChange('resolved')}
-                className="text-xs justify-center"
+                className="text-xs justify-center font-medium"
               >
                 2. Issue Resolved
               </Button>
@@ -301,7 +349,7 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={7}
+              rows={8}
               className="text-xs font-mono resize-none leading-relaxed"
             />
           </div>

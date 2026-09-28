@@ -2,15 +2,18 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRTDBList } from '@/firebase';
-import type { FaultReport } from '@/lib/types';
+import type { FaultReport, Notification as RTDBNotification } from '@/lib/types';
 import { playNotificationChime } from '@/lib/notification-sound';
+import { useToast } from '@/hooks/use-toast';
 
 export type NotificationPermissionState = 'default' | 'granted' | 'denied' | 'unsupported';
 
 export function useDesktopNotifications() {
+  const { toast } = useToast();
   const [permission, setPermission] = useState<NotificationPermissionState>('default');
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
-  const isInitialLoadRef = useRef(true);
+  
+  const isInitialLoadReportsRef = useRef(true);
   const knownReportIdsRef = useRef<Set<string>>(new Set());
 
   // 1. Check support and register Service Worker on mount
@@ -36,7 +39,62 @@ export function useDesktopNotifications() {
     }
   }, []);
 
-  // 2. Request user permission
+  // 2. Trigger a notification (Sound + Desktop OS Alert + In-App Toast)
+  const triggerNotification = useCallback(
+    ({
+      title,
+      body,
+      ticketId,
+      url = '/',
+      skipToast = false,
+    }: {
+      title: string;
+      body: string;
+      ticketId?: string;
+      url?: string;
+      skipToast?: boolean;
+    }) => {
+      // Always play the notification chime
+      playNotificationChime();
+
+      // Show in-app Toast alert for active tab
+      if (!skipToast) {
+        toast({
+          title,
+          description: body,
+        });
+      }
+
+      // Check browser desktop notification support & permission
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+
+      const options: NotificationOptions = {
+        body,
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        tag: ticketId || `fault-notification-${Date.now()}`,
+        data: { url, ticketId },
+      };
+
+      try {
+        if (swRegistration && 'showNotification' in swRegistration) {
+          swRegistration.showNotification(title, options);
+        } else {
+          const notif = new Notification(title, options);
+          notif.onclick = () => {
+            window.focus();
+            notif.close();
+          };
+        }
+      } catch (err) {
+        console.warn('Could not dispatch OS desktop notification:', err);
+      }
+    },
+    [swRegistration, toast]
+  );
+
+  // 3. Request user permission
   const requestPermission = useCallback(async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       return 'unsupported';
@@ -47,11 +105,10 @@ export function useDesktopNotifications() {
       setPermission(result as NotificationPermissionState);
 
       if (result === 'granted') {
-        // Trigger a welcome/confirmation notification & chime
-        playNotificationChime();
+        // Trigger a welcome confirmation notification & chime
         triggerNotification({
           title: '🔔 Desktop Alerts Enabled',
-          body: 'You will now receive instant PC alerts when new fault reports arrive, just like WhatsApp Web!',
+          body: 'You will now receive instant PC alerts & sounds when new fault reports arrive!',
           ticketId: 'WELCOME',
         });
       }
@@ -61,66 +118,36 @@ export function useDesktopNotifications() {
       console.error('Error requesting notification permission:', err);
       return 'denied';
     }
-  }, [swRegistration]);
+  }, [triggerNotification]);
 
-  // 3. Trigger a desktop notification
-  const triggerNotification = useCallback(
-    ({
-      title,
-      body,
-      ticketId,
-      url = '/',
-    }: {
-      title: string;
-      body: string;
-      ticketId?: string;
-      url?: string;
-    }) => {
-      if (typeof window === 'undefined' || !('Notification' in window)) return;
-      if (Notification.permission !== 'granted') return;
+  // 4. Test Alert Helper
+  const triggerTestAlert = useCallback(() => {
+    triggerNotification({
+      title: '🚨 Test Notification - Machine #MNX 003',
+      body: 'Ticket: FLT-TEST-889\nRadiographer: Test Operator\nIssue: Collimator Lamp Replacement Needed\nStatus: Pending Assessment',
+      ticketId: 'FLT-TEST-889',
+    });
+  }, [triggerNotification]);
 
-      playNotificationChime();
-
-      const options: NotificationOptions = {
-        body,
-        icon: '/icon.svg',
-        badge: '/icon.svg',
-        tag: ticketId || 'fault-notification',
-        data: { url, ticketId },
-      };
-
-      if (swRegistration && 'showNotification' in swRegistration) {
-        swRegistration.showNotification(title, options);
-      } else {
-        const notif = new Notification(title, options);
-        notif.onclick = () => {
-          window.focus();
-          notif.close();
-        };
-      }
-    },
-    [swRegistration]
-  );
-
-  // 4. Real-time listener for incoming fault reports
+  // 5. Real-time listener for incoming fault reports in RTDB
   const { data: allReports } = useRTDBList<FaultReport>('faultReports');
 
   useEffect(() => {
     if (!allReports || allReports.length === 0) return;
 
-    // Filter non-deleted reports
+    // Filter active (non-deleted) reports
     const validReports = allReports.filter((r) => r && !r.deleted);
 
-    if (isInitialLoadRef.current) {
-      // First time loading: populate known IDs without firing alerts for historical data
+    if (isInitialLoadReportsRef.current) {
+      // First load: seed existing IDs to prevent historical spam
       validReports.forEach((r) => {
         if (r.id) knownReportIdsRef.current.add(r.id);
       });
-      isInitialLoadRef.current = false;
+      isInitialLoadReportsRef.current = false;
       return;
     }
 
-    // Check for any newly added reports
+    // Check for newly added reports
     for (const report of validReports) {
       if (report.id && !knownReportIdsRef.current.has(report.id)) {
         knownReportIdsRef.current.add(report.id);
@@ -128,11 +155,15 @@ export function useDesktopNotifications() {
         const ticket = report.ticketId || report.id;
         const system = report.systemNumber || 'Unknown Machine';
         const radiographer = report.radiographerName || 'Radiographer';
-        const fault = report.customFaultDescription || report.faultSubCategory || report.faultCategory || 'Equipment Fault';
+        const fault =
+          report.customFaultDescription ||
+          report.faultSubCategory ||
+          report.faultCategory ||
+          'Equipment Fault';
 
         triggerNotification({
           title: `🚨 New Fault Logged - Machine #${system}`,
-          body: `Ticket: ${ticket}\nReported by: ${radiographer}\nIssue: ${fault}\nLocation: ${report.facility || 'Facility'}`,
+          body: `Ticket: ${ticket} | ${radiographer}\nIssue: ${fault}\nLocation: ${report.facility || 'Facility'}`,
           ticketId: ticket,
           url: '/',
         });
@@ -144,6 +175,7 @@ export function useDesktopNotifications() {
     permission,
     requestPermission,
     triggerNotification,
+    triggerTestAlert,
     isSupported: permission !== 'unsupported',
     isGranted: permission === 'granted',
   };
