@@ -2,8 +2,6 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'export',
-  trailingSlash: true,
   generateBuildId: async () => {
     // This will generate a new build id for every build
     return new Date().getTime().toString();

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { DEFAULT_SENDER_EMAIL, DEFAULT_SENDER_FULL } from '@/lib/email-templates';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: Request) {
   try {
     const { to, subject, body, ticketId, reportId } = await request.json();
@@ -37,6 +40,13 @@ export async function POST(request: Request) {
             user: senderEmail,
             pass: smtpPass,
           },
+          tls: {
+            // Prevent failure on custom cPanel / private mail server SSL certs
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
         });
 
         // Convert body plain text with linebreaks to clean html

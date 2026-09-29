@@ -152,10 +152,23 @@ export function SendEmailDialog({ report, children }: SendEmailDialogProps) {
         }),
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result: any = null;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        if (!response.ok) {
+          throw new Error(
+            response.status === 404
+              ? 'API endpoint (/api/send-email) was not found (404). Please ensure the Next.js app on Vercel is deployed with serverless functions enabled.'
+              : `Server error (${response.status} ${response.statusText}): Please check Vercel deployment logs.`
+          );
+        }
+        throw new Error('Received non-JSON response from server.');
+      }
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to dispatch email.');
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || 'Failed to dispatch email.');
       }
 
       // Record email sent status on report in RTDB
